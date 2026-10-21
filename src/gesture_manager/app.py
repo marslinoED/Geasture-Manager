@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from enum import Enum
 import logging
+import os
+from pathlib import Path
 import tkinter as tk
 
 from PIL import Image, ImageTk
@@ -126,7 +128,10 @@ class GestureManagerApp:
                 ),
             )
             self.icon.run_detached()
-            self._tray_ready = True
+            # pystray starts its Win32 message loop on a worker thread. A
+            # successful return only means that thread was launched; the
+            # native window and notification icon are created later.
+            self.root.after(1500, self._check_tray_startup)
         except Exception as exc:
             logger.exception("Could not start the system tray icon")
             self._tray_failed = True
@@ -135,6 +140,23 @@ class GestureManagerApp:
 
         self.ui.refresh_state()
         self.root.after(250, self._process_commands)
+
+    def _check_tray_startup(self) -> None:
+        """Fall back to the window if pystray's detached Win32 loop died."""
+        if self._closing or self.icon is None:
+            return
+        tray_thread = getattr(self.icon, "_thread", None)
+        if tray_thread is not None and tray_thread.is_alive():
+            self._tray_ready = True
+            self.ui.refresh_state()
+            return
+
+        logger.error("System tray message loop did not start; showing the main window")
+        self._tray_failed = True
+        self.controller.report_error(
+            "The system tray could not start. Gesture Manager is open in its window."
+        )
+        self.show_window()
 
     def _create_icon_image(self) -> Image.Image:
         return self._app_icon_image.resize((64, 64), Image.Resampling.LANCZOS)
@@ -361,6 +383,18 @@ class GestureManagerApp:
 
 
 def main() -> None:
+    log_dir = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local")) / "GestureManager" / "logs"
+    try:
+        log_dir.mkdir(parents=True, exist_ok=True)
+        logging.basicConfig(
+            filename=log_dir / "app.log",
+            level=logging.INFO,
+            format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+            encoding="utf-8",
+        )
+    except OSError:
+        logging.basicConfig(level=logging.INFO)
+        logger.exception("Could not create the application log file")
     root = ttk.Window(
         title="Gesture Manager",
         theme="nord-light",

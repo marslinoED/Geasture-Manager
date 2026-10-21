@@ -30,7 +30,7 @@ After changing application code:
 4. Find the portable folder and ZIP in `releases/<version>/`.
 5. Extract the ZIP and launch `GestureManager.exe`.
 
-The batch file selects `.venv\Scripts\python.exe` when available, otherwise `py -3.13`, then `python`. The equivalent direct command is:
+The batch file creates `.venv` with Python 3.13 when it is missing, installs the application and pinned build dependencies, then builds the release. The equivalent manual setup and build commands are:
 
 ```powershell
 python build_release.py
@@ -75,6 +75,11 @@ The build script verifies the ZIP member list and archive integrity. That check 
 
 ## Troubleshooting
 
+- **The process is running but no tray icon appears:** Gesture Manager hides its
+  window after startup. Check the notification area's hidden-icons menu. If the
+  tray message loop fails during startup, the app now opens its main window
+  instead. Startup and tray errors are logged to
+  `%LOCALAPPDATA%\GestureManager\logs\app.log`.
 - **PyInstaller missing or has the wrong version:** run the build dependency installation command above in the same virtual environment.
 - **A runtime dependency is missing:** install the project with `python -m pip install -e ".[build]"` and rerun the build.
 - **A model file is missing:** restore `models/hand_detector.tflite` and `models/hand_landmarks_detector.tflite`. The build does not download models.
