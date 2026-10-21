@@ -3,18 +3,38 @@ __pycache__/
 *.egg-info/
 .venv/
 venv/
+.env
+.env.*
+!.env.example
 build/
 dist/
 releases/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
 .idea/
 .vscode/
 *.spec
 
+# Test, type-checker, and tool caches
+.tox/
+.nox/
+.hypothesis/
+.pyre/
+.pytype/
+.pyright/
+
+# Logs and local runtime output
+*.log
+logs/
+
 # Local application data and captured material
 data/
+captures/
+recordings/
 *.model
 *.landmarks
 

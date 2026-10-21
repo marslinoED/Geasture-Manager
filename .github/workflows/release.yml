@@ -1,0 +1,62 @@
+name: Build and publish Windows release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version without the v prefix (for example 0.1.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      VERSION: ${{ inputs.version || github.ref_name }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Select release version
+        shell: pwsh
+        run: |
+          $version = "${env:VERSION}" -replace '^v', ''
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Release version must use the form X.Y.Z, received '$version'."
+          }
+          "VERSION=$version" >> $env:GITHUB_ENV
+          $buildScript = Get-Content build_release.py -Raw
+          $updated = [regex]::Replace(
+            $buildScript,
+            '(?m)^APP_VERSION\s*=\s*"[^"]+"',
+            "APP_VERSION = `"$version`"",
+            1
+          )
+          Set-Content build_release.py $updated -Encoding utf8
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install build dependencies
+        run: python -m pip install --upgrade pip setuptools && python -m pip install --editable ".[build]"
+
+      - name: Build portable release
+        run: python build_release.py
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $tag = "v$env:VERSION"
+          $archive = "releases\$env:VERSION\GestureManager-Portable-$env:VERSION.zip"
+          gh release create $tag $archive --title "Gesture Manager $env:VERSION" --generate-notes
