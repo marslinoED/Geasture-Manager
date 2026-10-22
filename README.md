@@ -16,7 +16,7 @@ Gesture Manager is a Windows app that lets you create your own hand gestures to 
 1. Open the [latest GitHub release](https://github.com/marslinoED/Geasture-Manager/releases/latest).
 2. In the release's **Assets** section, download `GestureManager-Portable-0.1.0.zip` (or the portable ZIP with the newest version number). Do not download **Source code**.
 3. Extract the ZIP, open the extracted folder, and run `GestureManager.exe`.
-
+4. try my [Profile](https://github.com/marslinoED/Geasture-Manager/notes/main.gmp) packup import it in your local version
 If a release is listed, its portable ZIP will be in **Assets**. The project files here do not confirm whether a public release is currently available.
 
 ## 4. Development setup
